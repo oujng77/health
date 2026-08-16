@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="健康記録">
+<meta name="theme-color" content="#f7f7f5">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232f6f8f'/%3E%3Cpath d='M36 118 L70 84 L96 104 L144 58' stroke='white' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>健康記録</title>
+<style>
+:root{
+  --surface:#f7f7f5; --card:#ffffff; --ink:#1c1c1a; --ink2:#55554f; --muted:#8a8a82;
+  --line:#e3e3dd; --line2:#f0f0ea;
+  --accent:#2f6f8f; --accent-soft:#e3eef4; --on-accent:#ffffff;
+  --accent2:#7a6a3a;
+  --ok:#3f7a4e; --danger:#a4463c;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --surface:#16171a; --card:#1f2124; --ink:#f0f0ec; --ink2:#b9b9b2; --muted:#84847d;
+    --line:#32343a; --line2:#26282c;
+    --accent:#7fb6d1; --accent-soft:#243740; --on-accent:#10222a;
+    --accent2:#c2ad72;
+    --ok:#7fbf8e; --danger:#e08a7f;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--surface); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px; line-height:1.5;
+  padding:0 14px calc(28px + env(safe-area-inset-bottom));
+  max-width:560px; margin:0 auto;
+  -webkit-text-size-adjust:100%;
+}
+header{padding:calc(14px + env(safe-area-inset-top)) 2px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-size:19px;margin:0;letter-spacing:.02em}
+.sub{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card h2{font-size:13px;margin:0 0 12px;color:var(--ink2);font-weight:600;letter-spacing:.04em}
+label{display:block;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.row{margin-bottom:16px}
+.row:last-child{margin-bottom:0}
+input[type=date],input[type=number],input[type=text],textarea{
+  width:100%;font-size:17px;font-family:inherit;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;appearance:none;
+}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.stepper{display:flex;gap:8px;align-items:stretch}
+.stepper input{text-align:center;font-variant-numeric:tabular-nums;font-size:20px;font-weight:600}
+.stepper button{
+  flex:0 0 52px;font-size:22px;font-weight:400;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+}
+.unit{font-size:13px;color:var(--muted);margin-left:6px}
+button{font-family:inherit;cursor:pointer}
+.toggle{display:flex;gap:8px}
+.toggle button{
+  flex:1;padding:12px 0;font-size:15px;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink2);
+}
+.toggle button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{
+  padding:7px 11px;font-size:13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink2);
+}
+.primary{
+  width:100%;padding:15px;font-size:17px;font-weight:600;
+  background:var(--accent);color:var(--on-accent);border:none;border-radius:12px;margin-top:4px;
+}
+.primary:active{opacity:.85}
+.ghost{
+  width:100%;padding:11px;font-size:14px;background:transparent;
+  border:1px solid var(--line);border-radius:10px;color:var(--ink2);margin-top:8px;
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2);border-radius:10px;overflow:hidden}
+.stat{background:var(--card);padding:12px 8px;text-align:center}
+.stat .v{font-size:21px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .k{font-size:11px;color:var(--muted);margin-top:2px}
+.stat .d{font-size:11px;margin-top:1px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{padding:6px 12px;font-size:12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted)}
+.tabs button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+svg{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.chart-empty{font-size:13px;color:var(--muted);text-align:center;padding:26px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th{font-size:11px;color:var(--muted);font-weight:500;text-align:right;padding:0 0 7px;border-bottom:1px solid var(--line)}
+th:first-child{text-align:left}
+td{padding:11px 0;border-bottom:1px solid var(--line2);text-align:right;color:var(--ink2)}
+td:first-child{text-align:left;color:var(--ink)}
+tr:last-child td{border-bottom:none}
+tbody tr:active{background:var(--line2)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.dash{color:var(--muted)}
+.banner{background:var(--danger);color:#fff;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px}
+.toast{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--surface);padding:11px 20px;border-radius:999px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:50;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+details summary{font-size:13px;color:var(--ink2);cursor:pointer;padding:4px 0}
+details[open] summary{margin-bottom:10px}
+textarea{min-height:110px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.foot{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 0;line-height:1.7}
+.editing{background:var(--accent-soft);border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>健康記録</h1>
+  <span class="sub" id="today"></span>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<!-- 集計 -->
+<div class="card">
+  <div class="stats">
+    <div class="stat"><div class="v" id="s-weight">–</div><div class="k">体重 kg</div><div class="d" id="s-weight-d">&nbsp;</div></div>
+    <div class="stat"><div class="v" id="s-steps">–</div><div class="k">歩数 7日平均</div><div class="d" id="s-steps-d">&nbsp;</div></div>
+    <div class="stat"><div class="v" id="s-streak">–</div><div class="k">連続記録 日</div><div class="d" id="s-streak-d">&nbsp;</div></div>
+  </div>
+</div>
+
+<!-- 入力 -->
+<div class="card" id="input-card">
+  <h2 id="form-title">きょうの記録</h2>
+
+  <div class="row">
+    <label for="f-date">日付</label>
+    <input type="date" id="f-date">
+  </div>
+
+  <div class="row">
+    <label for="f-weight">体重 <span class="unit">kg</span></label>
+    <div class="stepper">
+      <button type="button" data-step="weight" data-delta="-0.1" aria-label="0.1減らす">−</button>
+      <input type="number" id="f-weight" inputmode="decimal" step="0.1" placeholder="57.0">
+      <button type="button" data-step="weight" data-delta="0.1" aria-label="0.1増やす">＋</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label for="f-steps">歩数 <span class="unit">歩　ヘルスケアアプリの1日合計</span></label>
+    <div class="stepper">
+      <button type="button" data-step="steps" data-delta="-500" aria-label="500減らす">−</button>
+      <input type="number" id="f-steps" inputmode="numeric" step="100" placeholder="3000">
+      <button type="button" data-step="steps" data-delta="500" aria-label="500増やす">＋</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>筋トレ</label>
+    <div class="toggle" id="f-train">
+      <button type="button" data-train="1" aria-pressed="false">やった</button>
+      <button type="button" data-train="0" aria-pressed="false">休み</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label for="f-protein">タンパク質 <span class="unit">g　目標 90g</span></label>
+    <div class="stepper">
+      <button type="button" data-step="protein" data-delta="-5" aria-label="5減らす">−</button>
+      <input type="number" id="f-protein" inputmode="numeric" step="5" placeholder="90">
+      <button type="button" data-step="protein" data-delta="5" aria-label="5増やす">＋</button>
+    </div>
+    <div class="chips">
+      <button type="button" data-protein="70">70</button>
+      <button type="button" data-protein="80">80</button>
+      <button type="button" data-protein="90">90</button>
+      <button type="button" data-protein="100">100</button>
+    </div>
+  </div>
+
+  <button class="primary" id="save">保存する</button>
+  <button class="ghost" id="clear-form" hidden>編集をやめる</button>
+</div>
+
+<!-- グラフ -->
+<div class="card">
+  <h2>推移</h2>
+  <div class="tabs" id="chart-tabs">
+    <button type="button" data-chart="weight" aria-pressed="true">体重</button>
+    <button type="button" data-chart="steps" aria-pressed="false">歩数</button>
+    <button type="button" data-chart="protein" aria-pressed="false">タンパク質</button>
+  </div>
+  <div id="chart"></div>
+</div>
+
+<!-- 履歴 -->
+<div class="card">
+  <h2>履歴（タップで修正）</h2>
+  <table>
+    <thead><tr><th>日付</th><th>体重</th><th>歩数</th><th>筋</th><th>Pg</th></tr></thead>
+    <tbody id="history"></tbody>
+  </table>
+  <button class="ghost" id="more" hidden>もっと見る</button>
+</div>
+
+<!-- データ -->
+<div class="card">
+  <details>
+    <summary>データの書き出し・バックアップ</summary>
+    <button class="ghost" id="csv">CSVで書き出す（Excel用）</button>
+    <button class="ghost" id="backup">バックアップを表示（全データ）</button>
+    <button class="ghost" id="restore-open">バックアップから復元</button>
+    <div id="io" hidden style="margin-top:10px">
+      <textarea id="io-text" spellcheck="false"></textarea>
+      <button class="ghost" id="io-apply" hidden>この内容で復元する</button>
+      <button class="ghost" id="io-close">閉じる</button>
+    </div>
+  </details>
+</div>
+
+<p class="foot">データはこの端末の中だけに保存されます。<br>機種変更の前にバックアップを取ってください。</p>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+var KEY = "health-log-v1";
+var TARGET_WEIGHT = 55;
+var PROTEIN_GOAL = 90;
+
+/* ---------- ストレージ ---------- */
+var memory = null;
+function storageOK(){
+  try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; }
+  catch(e){ return false; }
+}
+var canStore = storageOK();
+if(!canStore){
+  var b = document.getElementById("banner");
+  b.hidden = false;
+  b.textContent = "この開き方では保存ができません。ブラウザ（Safari）で開き直してください。入力内容は画面を閉じると消えます。";
+}
+function load(){
+  if(!canStore) return memory || (memory = {});
+  try{ return JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ return {}; }
+}
+function save(d){
+  if(!canStore){ memory = d; return true; }
+  try{ localStorage.setItem(KEY, JSON.stringify(d)); return true; }
+  catch(e){ toast("保存できませんでした"); return false; }
+}
+
+/* ---------- ユーティリティ ---------- */
+function todayStr(){
+  var n = new Date();
+  return n.getFullYear() + "-" + String(n.getMonth()+1).padStart(2,"0") + "-" + String(n.getDate()).padStart(2,"0");
+}
+function fmtDate(s){
+  var p = s.split("-"), w = ["日","月","火","水","木","金","土"];
+  var d = new Date(+p[0], +p[1]-1, +p[2]);
+  return (+p[1]) + "/" + (+p[2]) + "(" + w[d.getDay()] + ")";
+}
+function shiftDays(s, n){
+  var p = s.split("-"), d = new Date(+p[0], +p[1]-1, +p[2]);
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function sortedKeys(d){ return Object.keys(d).sort(); }
+function num(v){ return (v === null || v === undefined || v === "") ? null : +v; }
+function toast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove("show"); }, 1900);
+}
+function $(id){ return document.getElementById(id); }
+
+/* ---------- 入力フォーム ---------- */
+var trainState = null;
+var editingDate = null;
+
+function setTrain(v){
+  trainState = v;
+  Array.prototype.forEach.call($("f-train").children, function(b){
+    b.setAttribute("aria-pressed", String(+b.dataset.train === v));
+  });
+}
+function fillForm(date){
+  var d = load(), r = d[date] || {};
+  $("f-date").value = date;
+  $("f-weight").value = r.weight != null ? r.weight : "";
+  $("f-steps").value  = r.steps  != null ? r.steps  : "";
+  $("f-protein").value= r.protein!= null ? r.protein: "";
+  setTrain(r.train === undefined ? null : r.train);
+  var isToday = date === todayStr();
+  $("form-title").textContent = isToday ? "きょうの記録" : fmtDate(date) + " の記録";
+  $("input-card").classList.toggle("editing", !isToday);
+  $("clear-form").hidden = isToday;
+  editingDate = date;
+}
+
+document.addEventListener("click", function(e){
+  var t = e.target.closest ? e.target.closest("button") : null;
+  if(!t) return;
+
+  if(t.dataset.step){
+    var kind = t.dataset.step, inp = $("f-" + kind);
+    var empty = { weight: (lastWeight() || 57), protein: PROTEIN_GOAL, steps: 0 };
+    var base = inp.value === "" ? empty[kind] : +inp.value;
+    var v = base + (+t.dataset.delta);
+    inp.value = kind === "weight" ? Math.round(v*10)/10 : Math.max(0, Math.round(v));
+  }
+  if(t.dataset.protein) $("f-protein").value = t.dataset.protein;
+  if(t.dataset.train) setTrain(+t.dataset.train);
+  if(t.dataset.chart){
+    chartMode = t.dataset.chart;
+    Array.prototype.forEach.call($("chart-tabs").children, function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.chart === chartMode));
+    });
+    renderChart();
+  }
+});
+
+$("f-date").addEventListener("change", function(){ fillForm(this.value); });
+$("clear-form").addEventListener("click", function(){ fillForm(todayStr()); });
+
+$("save").addEventListener("click", function(){
+  var date = $("f-date").value || todayStr();
+  var w = num($("f-weight").value), s = num($("f-steps").value), p = num($("f-protein").value);
+  if(w === null && s === null && p === null && trainState === null){ toast("入力がありません"); return; }
+  var d = load(), r = d[date] || {};
+  if(w !== null) r.weight = Math.round(w*10)/10;
+  if(s !== null) r.steps = Math.round(s);
+  if(p !== null) r.protein = Math.round(p);
+  if(trainState !== null) r.train = trainState;
+  d[date] = r;
+  if(save(d)){
+    toast(fmtDate(date) + " を保存しました");
+    render();
+    fillForm(todayStr());
+  }
+});
+
+function lastWeight(){
+  var d = load(), ks = sortedKeys(d);
+  for(var i = ks.length - 1; i >= 0; i--) if(d[ks[i]].weight != null) return d[ks[i]].weight;
+  return null;
+}
+
+/* ---------- 集計 ---------- */
+function render(){ renderStats(); renderChart(); renderHistory(); }
+
+function renderStats(){
+  var d = load(), ks = sortedKeys(d);
+
+  // 体重：最新値と直近7日前比
+  var ws = ks.filter(function(k){ return d[k].weight != null; });
+  if(ws.length){
+    var last = ws[ws.length-1];
+    $("s-weight").textContent = d[last].weight.toFixed(1);
+    var diffTxt = "目標まで " + (Math.round((d[last].weight - TARGET_WEIGHT)*10)/10) + "kg";
+    if(ws.length > 1){
+      var prev = ws[ws.length-2], dv = d[last].weight - d[prev].weight;
+      diffTxt = (dv > 0 ? "▲" : dv < 0 ? "▼" : "±") + Math.abs(Math.round(dv*10)/10).toFixed(1)
+              + " ／ 残 " + (Math.round((d[last].weight - TARGET_WEIGHT)*10)/10);
+    }
+    $("s-weight-d").textContent = diffTxt;
+    $("s-weight-d").style.color = "var(--muted)";
+  } else { $("s-weight").textContent = "–"; $("s-weight-d").innerHTML = "&nbsp;"; }
+
+  // 歩数：直近7日平均（記録のある日のみ）
+  var t = todayStr(), sum = 0, cnt = 0, tcnt = 0;
+  for(var i = 0; i < 7; i++){
+    var k = shiftDays(t, -i), r = d[k];
+    if(r && r.steps != null){ sum += r.steps; cnt++; }
+    if(r && r.train === 1) tcnt++;
+  }
+  $("s-steps").textContent = cnt ? Math.round(sum/cnt).toLocaleString() : "–";
+  $("s-steps-d").textContent = "筋トレ 週" + tcnt + "回";
+
+  // 連続記録
+  var st = 0, cur = t;
+  if(!d[t]) cur = shiftDays(t, -1);
+  while(d[cur]){ st++; cur = shiftDays(cur, -1); }
+  $("s-streak").textContent = st;
+  $("s-streak-d").textContent = "全" + ks.length + "日分";
+}
+
+/* ---------- グラフ ---------- */
+var chartMode = "weight";
+var CFG = {
+  weight:  { label:"体重", unit:"kg", type:"line", color:"var(--accent)",  fmt:function(v){ return v.toFixed(1); } },
+  steps:   { label:"歩数", unit:"歩", type:"bar",  color:"var(--accent)",  fmt:function(v){ return v.toLocaleString(); } },
+  protein: { label:"タンパク質", unit:"g", type:"bar", color:"var(--accent2)", fmt:function(v){ return String(v); } }
+};
+
+function renderChart(){
+  var d = load(), cfg = CFG[chartMode];
+  var pts = sortedKeys(d)
+    .filter(function(k){ return d[k][chartMode] != null; })
+    .slice(-30)
+    .map(function(k){ return { date:k, v:d[k][chartMode] }; });
+
+  var host = $("chart");
+  if(pts.length === 0){
+    host.innerHTML = '<div class="chart-empty">記録が入るとここにグラフが出ます</div>';
+    return;
+  }
+
+  var W = 320, H = 150, L = 36, R = 6, T = 10, B = 20;
+  var iw = W - L - R, ih = H - T - B;
+  var vals = pts.map(function(p){ return p.v; });
+  var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+  var lo, hi;
+  if(cfg.type === "line"){
+    var pad = Math.max((mx - mn) * 0.25, 0.4);
+    lo = mn - pad; hi = mx + pad;
+    if(chartMode === "weight"){ lo = Math.min(lo, TARGET_WEIGHT - 0.3); hi = Math.max(hi, TARGET_WEIGHT + 0.3); }
+  } else { lo = 0; hi = mx * 1.15 || 1; }
+  if(hi - lo < 1e-6) hi = lo + 1;
+
+  var n = pts.length;
+  function X(i){ return n === 1 ? L + iw/2 : L + iw * i / (n - 1); }
+  function Y(v){ return T + ih * (1 - (v - lo) / (hi - lo)); }
+
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + cfg.label + 'の推移">';
+
+  // 目盛り（3本・控えめ）
+  for(var g = 0; g <= 2; g++){
+    var gv = lo + (hi - lo) * g / 2, gy = Y(gv);
+    s += '<line x1="' + L + '" y1="' + gy.toFixed(1) + '" x2="' + (W-R) + '" y2="' + gy.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>';
+    var lbl = chartMode === "steps" ? (gv >= 1000 ? (gv/1000).toFixed(1) + "k" : String(Math.round(gv)))
+            : chartMode === "weight" ? gv.toFixed(1) : Math.round(gv);
+    s += '<text x="' + (L-6) + '" y="' + (gy+3.5).toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--muted)">' + lbl + '</text>';
+  }
+
+  if(cfg.type === "line"){
+    if(chartMode === "weight" && TARGET_WEIGHT >= lo && TARGET_WEIGHT <= hi){
+      var ty = Y(TARGET_WEIGHT);
+      s += '<line x1="' + L + '" y1="' + ty.toFixed(1) + '" x2="' + (W-R) + '" y2="' + ty.toFixed(1) + '" stroke="var(--ok)" stroke-width="1" stroke-dasharray="3 3"/>';
+      s += '<text x="' + (W-R) + '" y="' + (ty-4).toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--ok)">目標 ' + TARGET_WEIGHT + '</text>';
+    }
+    var dd = pts.map(function(p,i){ return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.v).toFixed(1); }).join(" ");
+    s += '<path d="' + dd + '" fill="none" stroke="' + cfg.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    pts.forEach(function(p,i){
+      if(i !== n-1 && n > 12) return;               // 点が多いときは最新のみ
+      var r = (i === n-1) ? 4 : 2.4;
+      s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="' + r + '" fill="' + cfg.color + '"'
+         + (i === n-1 ? ' stroke="var(--card)" stroke-width="2"' : '') + '/>';
+    });
+    var lp = pts[n-1];
+    s += '<text x="' + Math.min(X(n-1), W-R-2).toFixed(1) + '" y="' + Math.max(Y(lp.v)-9, 9).toFixed(1) + '" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink)">' + cfg.fmt(lp.v) + '</text>';
+  } else {
+    var bw = Math.max(Math.min(iw / n - 2, 16), 3);
+    pts.forEach(function(p,i){
+      var y = Y(p.v), h = Math.max(T + ih - y, 2);
+      var x = X(i) - bw/2;
+      if(n === 1) x = L + iw/2 - bw/2;
+      s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + Math.min(4, bw/2).toFixed(1) + '" fill="' + cfg.color + '" opacity="' + (i === n-1 ? 1 : 0.55) + '"/>';
+    });
+    if(chartMode === "protein" && PROTEIN_GOAL <= hi){
+      var py = Y(PROTEIN_GOAL);
+      s += '<line x1="' + L + '" y1="' + py.toFixed(1) + '" x2="' + (W-R) + '" y2="' + py.toFixed(1) + '" stroke="var(--ok)" stroke-width="1" stroke-dasharray="3 3"/>';
+      s += '<text x="' + (W-R) + '" y="' + (py-4).toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--ok)">目標 ' + PROTEIN_GOAL + 'g</text>';
+    }
+  }
+
+  // 日付ラベル（両端のみ）
+  s += '<text x="' + L + '" y="' + (H-5) + '" font-size="9" fill="var(--muted)">' + fmtDate(pts[0].date) + '</text>';
+  if(n > 1) s += '<text x="' + (W-R) + '" y="' + (H-5) + '" text-anchor="end" font-size="9" fill="var(--muted)">' + fmtDate(pts[n-1].date) + '</text>';
+  s += '</svg>';
+  host.innerHTML = s;
+}
+
+/* ---------- 履歴 ---------- */
+var shown = 10;
+function renderHistory(){
+  var d = load(), ks = sortedKeys(d).reverse();
+  var tb = $("history");
+  if(!ks.length){
+    tb.innerHTML = '<tr><td colspan="5" class="dash" style="text-align:center;padding:20px 0">まだ記録がありません</td></tr>';
+    $("more").hidden = true;
+    return;
+  }
+  tb.innerHTML = ks.slice(0, shown).map(function(k){
+    var r = d[k];
+    return '<tr data-date="' + k + '">'
+      + '<td>' + fmtDate(k) + '</td>'
+      + '<td>' + (r.weight != null ? r.weight.toFixed(1) : '<span class="dash">–</span>') + '</td>'
+      + '<td>' + (r.steps != null ? r.steps.toLocaleString() : '<span class="dash">–</span>') + '</td>'
+      + '<td>' + (r.train === 1 ? '<span class="dot"></span>' : '<span class="dash">–</span>') + '</td>'
+      + '<td>' + (r.protein != null ? r.protein : '<span class="dash">–</span>') + '</td>'
+      + '</tr>';
+  }).join("");
+  $("more").hidden = ks.length <= shown;
+}
+$("history").addEventListener("click", function(e){
+  var tr = e.target.closest("tr");
+  if(tr && tr.dataset.date){ fillForm(tr.dataset.date); window.scrollTo({top:0, behavior:"smooth"}); }
+});
+$("more").addEventListener("click", function(){ shown += 20; renderHistory(); });
+
+/* ---------- 書き出し / 復元 ---------- */
+function showIO(text, applyable){
+  $("io").hidden = false;
+  $("io-text").value = text;
+  $("io-apply").hidden = !applyable;
+  $("io-text").focus();
+  if(!applyable) $("io-text").select();
+}
+$("io-close").addEventListener("click", function(){ $("io").hidden = true; });
+
+$("csv").addEventListener("click", function(){
+  var d = load(), ks = sortedKeys(d);
+  var rows = ["日付,体重(kg),歩数,筋トレ,タンパク質(g)"];
+  ks.forEach(function(k){
+    var r = d[k];
+    rows.push([k, r.weight != null ? r.weight : "", r.steps != null ? r.steps : "",
+               r.train === 1 ? "○" : "", r.protein != null ? r.protein : ""].join(","));
+  });
+  var csv = rows.join("\n");
+  if(!download("health-log.csv", "﻿" + csv, "text/csv")) showIO(csv, false);
+  else toast("CSVを書き出しました");
+});
+$("backup").addEventListener("click", function(){
+  showIO(JSON.stringify(load()), false);
+  toast("長押しで全選択→コピー");
+});
+$("restore-open").addEventListener("click", function(){
+  showIO("", true);
+  $("io-text").value = "";
+  toast("バックアップの文字列を貼り付けてください");
+});
+$("io-apply").addEventListener("click", function(){
+  var txt = $("io-text").value.trim();
+  if(!txt){ toast("空です"); return; }
+  var obj;
+  try{ obj = JSON.parse(txt); }catch(e){ toast("形式が正しくありません"); return; }
+  if(typeof obj !== "object" || obj === null){ toast("形式が正しくありません"); return; }
+  var cur = load(), added = 0;
+  Object.keys(obj).forEach(function(k){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(k)){ cur[k] = Object.assign({}, cur[k], obj[k]); added++; }
+  });
+  if(save(cur)){ toast(added + "日分を復元しました"); render(); $("io").hidden = true; }
+});
+
+function download(name, content, mime){
+  try{
+    var blob = new Blob([content], {type: mime + ";charset=utf-8"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- 起動 ---------- */
+$("today").textContent = fmtDate(todayStr());
+fillForm(todayStr());
+render();
+
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden && $("f-date").value !== todayStr() && editingDate === todayStr()) {
+    fillForm(todayStr());
+    $("today").textContent = fmtDate(todayStr());
+  }
+});
+})();
+</script>
+</body>
+</html>
